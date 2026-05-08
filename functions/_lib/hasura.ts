@@ -18,14 +18,22 @@ export interface HasuraGraphQLError {
   extensions?: Record<string, unknown>;
 }
 
-const RESOLVED_HASURA_URL =
-  process.env.NHOST_HASURA_URL ??
-  process.env.NHOST_GRAPHQL_URL ??
-  process.env.HASURA_GRAPHQL_URL ??
-  // Cloud project URL — used by the smoke test which calls the same module
-  // from the laptop with admin secret + SOCKS proxy out-of-band (the proxy
-  // is set via env vars at runtime, not here).
-  'https://ntytiuebfzzodrotraun.hasura.ap-south-1.nhost.run/v1/graphql';
+// Build the GraphQL endpoint deterministically from subdomain + region.
+// Nhost injects `NHOST_HASURA_URL` pointing at `/console` (not /v1/graphql) —
+// using it directly 404s. `NHOST_GRAPHQL_URL` exists in newer projects but
+// the path varies. The subdomain.region pattern is stable across both eras.
+const RESOLVED_HASURA_URL = (() => {
+  const sub = process.env.NHOST_SUBDOMAIN;
+  const region = process.env.NHOST_REGION;
+  if (sub && region) {
+    return `https://${sub}.hasura.${region}.nhost.run/v1/graphql`;
+  }
+  // Local dev / smoke test fall-throughs.
+  return (
+    process.env.HASURA_GRAPHQL_URL ??
+    'https://ntytiuebfzzodrotraun.hasura.ap-south-1.nhost.run/v1/graphql'
+  );
+})();
 
 const RESOLVED_ADMIN_SECRET =
   process.env.NHOST_ADMIN_SECRET ?? // Nhost's actual injected name in deployed Functions
