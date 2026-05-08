@@ -1,8 +1,10 @@
 // Tiny Hasura admin GraphQL helper used by every Function.
 //
 // Functions run inside Nhost's serverless runtime which auto-injects:
-//   - NHOST_HASURA_URL      → the GraphQL endpoint
-//   - NHOST_HASURA_ADMIN_SECRET → the admin secret
+//   - NHOST_HASURA_URL      → the GraphQL endpoint (and NHOST_GRAPHQL_URL)
+//   - NHOST_ADMIN_SECRET    → the admin secret  (Nhost's own var name —
+//                              not NHOST_HASURA_ADMIN_SECRET, which is
+//                              what one might guess but doesn't exist)
 //
 // We deliberately use the admin secret (not the caller's JWT) for writes
 // because each Function does multiple coordinated INSERTs/UPDATEs that need
@@ -18,6 +20,7 @@ export interface HasuraGraphQLError {
 
 const RESOLVED_HASURA_URL =
   process.env.NHOST_HASURA_URL ??
+  process.env.NHOST_GRAPHQL_URL ??
   process.env.HASURA_GRAPHQL_URL ??
   // Cloud project URL — used by the smoke test which calls the same module
   // from the laptop with admin secret + SOCKS proxy out-of-band (the proxy
@@ -25,7 +28,10 @@ const RESOLVED_HASURA_URL =
   'https://ntytiuebfzzodrotraun.hasura.ap-south-1.nhost.run/v1/graphql';
 
 const RESOLVED_ADMIN_SECRET =
-  process.env.NHOST_HASURA_ADMIN_SECRET ?? process.env.HASURA_GRAPHQL_ADMIN_SECRET ?? '';
+  process.env.NHOST_ADMIN_SECRET ?? // Nhost's actual injected name in deployed Functions
+  process.env.NHOST_HASURA_ADMIN_SECRET ?? // also try, just in case
+  process.env.HASURA_GRAPHQL_ADMIN_SECRET ?? // local-dev convention
+  '';
 
 export async function hasuraAdmin<T>(
   query: string,
@@ -33,7 +39,7 @@ export async function hasuraAdmin<T>(
 ): Promise<T> {
   if (!RESOLVED_ADMIN_SECRET) {
     throw new Error(
-      'Hasura admin secret not in env (NHOST_HASURA_ADMIN_SECRET / HASURA_GRAPHQL_ADMIN_SECRET).',
+      'Hasura admin secret not in env (NHOST_ADMIN_SECRET / NHOST_HASURA_ADMIN_SECRET / HASURA_GRAPHQL_ADMIN_SECRET).',
     );
   }
   const res = await fetch(RESOLVED_HASURA_URL, {
