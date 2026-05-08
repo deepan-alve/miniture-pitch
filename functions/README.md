@@ -263,26 +263,30 @@ Last run output:
 SMOKE OK
 ```
 
-## Deployment caveat
+## Deployment
 
-These Functions are **not** deployed to Nhost in this build — the demo
-runs against the cloud Postgres + Hasura with the Function logic invoked
-either:
+These Functions are **deployed to Nhost cloud** via the `deepan-alve/miniture-pitch` GitHub repo connected to the Miniture project. Each lands at:
 
-1. **From the smoke test** via direct Hasura admin GraphQL calls (drives
-   the same SQL the Function would; the connector logic is mirrored
-   inline in the script).
-2. **Future deployment**: push to a GitHub-connected Nhost project and
-   each `*.ts` lands at
-   `https://<sub>.functions.<region>.nhost.run/v1/<filename>`.
+```
+https://ntytiuebfzzodrotraun.functions.ap-south-1.nhost.run/v1/<filename-without-extension>
+```
 
-For the live demo, the app calls Hasura GraphQL directly with the parent
-JWT for everything that's a pure read or simple write, and would call
-these Functions for the multi-step orchestration (submit-return,
-approve-qc, etc.). Until they're deployed, the admin agent can call the
-same logic from the admin dashboard via a thin in-app helper that posts
-to Hasura with the admin secret (or, more correctly, an Action wired
-through Hasura).
+`scripts/smoke-test.py` exercises the deployed cloud — it submits a return, approves QC, verifies the connector fired, the ledger row landed, the refurb listing got a Shopify GID, and cleans up. Idempotent.
+
+Trigger a fresh deploy:
+
+```bash
+HEAD=$(git -C ~/Documents/Padaipu/Miniture rev-parse HEAD)
+HTTPS_PROXY=socks5://127.0.0.1:1080 ALL_PROXY=socks5://127.0.0.1:1080 \
+  nhost deployments new \
+  --subdomain ntytiuebfzzodrotraun \
+  --ref "$HEAD" \
+  --user deepan-alve \
+  --message "your message" \
+  --follow
+```
+
+The proxy env vars are only needed on the dev machine that's behind a Fortinet TLS-inspecting middlebox; in CI/clean environments, drop them.
 
 ## Auth role config
 
