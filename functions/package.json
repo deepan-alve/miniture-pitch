@@ -1,0 +1,15 @@
+{
+  "name": "miniture-functions",
+  "version": "1.0.0",
+  "description": "Nhost serverless Functions for the Miniture Buyback feature",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.3"
+  }
+}

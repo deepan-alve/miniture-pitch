@@ -1,0 +1,23 @@
+# Nhost local + secrets
+.nhost
+.secrets
+.cloud-admin-secret
+
+# Node
+node_modules
+*.log
+.DS_Store
+
+# Expo / React Native
+app/.expo
+app/.expo-shared
+app/dist
+app/web-build
+app/ios
+app/android
+app/.metro-health-check*
+
+# Env / build
+.env
+.env.local
+*.tsbuildinfo
