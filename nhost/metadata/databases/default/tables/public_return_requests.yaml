@@ -1,0 +1,79 @@
+table:
+  name: return_requests
+  schema: public
+object_relationships:
+- name: account
+  using:
+    foreign_key_constraint_on: account_id
+- name: owned_unit
+  using:
+    foreign_key_constraint_on: owned_unit_id
+array_relationships:
+- name: assessments
+  using:
+    foreign_key_constraint_on:
+      column: return_request_id
+      table:
+        name: condition_assessments
+        schema: public
+- name: events
+  using:
+    foreign_key_constraint_on:
+      column: return_request_id
+      table:
+        name: return_request_events
+        schema: public
+insert_permissions:
+- role: parent
+  permission:
+    check:
+      account:
+        auth_user_id:
+          _eq: X-Hasura-User-Id
+    columns:
+    - owned_unit_id
+    - account_id
+    - path
+    - self_declared_grade
+    - pickup_address
+    - pickup_scheduled_for
+select_permissions:
+- role: ops
+  permission:
+    columns: '*'
+    filter: {}
+    allow_aggregations: true
+- role: parent
+  permission:
+    columns: '*'
+    filter:
+      account:
+        auth_user_id:
+          _eq: X-Hasura-User-Id
+    allow_aggregations: true
+update_permissions:
+- role: ops
+  permission:
+    columns: '*'
+    filter: {}
+    check: {}
+- role: parent
+  permission:
+    columns:
+    - self_declared_grade
+    - pickup_address
+    - pickup_scheduled_for
+    filter:
+      _and:
+      - account:
+          auth_user_id:
+            _eq: X-Hasura-User-Id
+      - status:
+          _in:
+          - draft
+          - submitted
+          - pickup_scheduled
+    check:
+      account:
+        auth_user_id:
+          _eq: X-Hasura-User-Id

@@ -1,0 +1,86 @@
+table:
+  name: accounts
+  schema: public
+array_relationships:
+- name: children
+  using:
+    foreign_key_constraint_on:
+      column: account_id
+      table:
+        name: child_profiles
+        schema: public
+- name: credit_ledger_entries
+  using:
+    foreign_key_constraint_on:
+      column: account_id
+      table:
+        name: store_credit_ledger
+        schema: public
+- name: discount_codes
+  using:
+    foreign_key_constraint_on:
+      column: account_id
+      table:
+        name: discount_codes
+        schema: public
+- name: orders
+  using:
+    foreign_key_constraint_on:
+      column: account_id
+      table:
+        name: orders
+        schema: public
+- name: owned_units
+  using:
+    foreign_key_constraint_on:
+      column: account_id
+      table:
+        name: owned_units
+        schema: public
+- name: return_requests
+  using:
+    foreign_key_constraint_on:
+      column: account_id
+      table:
+        name: return_requests
+        schema: public
+- name: transfers_received
+  using:
+    foreign_key_constraint_on:
+      column: to_account_id
+      table:
+        name: credit_transfers
+        schema: public
+- name: transfers_sent
+  using:
+    foreign_key_constraint_on:
+      column: from_account_id
+      table:
+        name: credit_transfers
+        schema: public
+select_permissions:
+- role: ops
+  permission:
+    columns: '*'
+    filter: {}
+    allow_aggregations: true
+- role: parent
+  permission:
+    columns: '*'
+    filter:
+      auth_user_id:
+        _eq: X-Hasura-User-Id
+    allow_aggregations: true
+update_permissions:
+- role: parent
+  permission:
+    columns:
+    - display_name
+    - phone
+    - default_address
+    filter:
+      auth_user_id:
+        _eq: X-Hasura-User-Id
+    check:
+      auth_user_id:
+        _eq: X-Hasura-User-Id

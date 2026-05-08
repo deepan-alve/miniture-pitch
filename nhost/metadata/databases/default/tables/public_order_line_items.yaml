@@ -1,0 +1,33 @@
+table:
+  name: order_line_items
+  schema: public
+object_relationships:
+- name: order
+  using:
+    foreign_key_constraint_on: order_id
+- name: product
+  using:
+    foreign_key_constraint_on: product_id
+array_relationships:
+- name: owned_units
+  using:
+    foreign_key_constraint_on:
+      column: order_line_item_id
+      table:
+        name: owned_units
+        schema: public
+select_permissions:
+- role: ops
+  permission:
+    columns: '*'
+    filter: {}
+    allow_aggregations: true
+- role: parent
+  permission:
+    columns: '*'
+    filter:
+      order:
+        account:
+          auth_user_id:
+            _eq: X-Hasura-User-Id
+    allow_aggregations: true

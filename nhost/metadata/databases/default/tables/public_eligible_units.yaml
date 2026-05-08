@@ -1,0 +1,25 @@
+table:
+  name: eligible_units
+  schema: public
+object_relationships:
+- name: account
+  using:
+    manual_configuration:
+      column_mapping:
+        account_id: id
+      insertion_order:
+      remote_table:
+        name: accounts
+        schema: public
+select_permissions:
+- role: ops
+  permission:
+    columns: '*'
+    filter: {}
+- role: parent
+  permission:
+    columns: '*'
+    filter:
+      account:
+        auth_user_id:
+          _eq: X-Hasura-User-Id

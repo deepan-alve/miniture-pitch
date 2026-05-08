@@ -1,0 +1,30 @@
+table:
+  name: ngo_partners
+  schema: public
+array_relationships:
+- name: donations
+  using:
+    foreign_key_constraint_on:
+      column: ngo_partner_id
+      table:
+        name: donation_records
+        schema: public
+select_permissions:
+- role: ops
+  permission:
+    columns: '*'
+    filter: {}
+    allow_aggregations: true
+- role: parent
+  permission:
+    columns: '*'
+    filter:
+      active:
+        _eq: true
+    allow_aggregations: true
+- role: public
+  permission:
+    columns: '*'
+    filter:
+      active:
+        _eq: true
