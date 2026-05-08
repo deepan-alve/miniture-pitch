@@ -136,7 +136,7 @@ async function handle(body: ReqBody): Promise<SyncResult> {
     {
       auth_user_id: authUserId,
       display_name: displayName,
-      shopify_customer_gid: `gid://shopify/Customer/synced-${authUserId.slice(0, 8)}`,
+      shopify_gid: `gid://shopify/Customer/synced-${authUserId.slice(0, 8)}`,
     },
   );
   if (!ins.insert_accounts_one) {
