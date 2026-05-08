@@ -1,0 +1,56 @@
+table:
+  name: condition_assessments
+  schema: public
+object_relationships:
+- name: return_request
+  using:
+    foreign_key_constraint_on: return_request_id
+array_relationships:
+- name: photos
+  using:
+    foreign_key_constraint_on:
+      column: assessment_id
+      table:
+        name: assessment_photos
+        schema: public
+insert_permissions:
+- role: ops
+  permission:
+    check:
+      phase:
+        _eq: qc_verified
+    columns:
+    - return_request_id
+    - phase
+    - grade
+    - notes
+- role: parent
+  permission:
+    check:
+      _and:
+      - return_request:
+          account:
+            auth_user_id:
+              _eq: X-Hasura-User-Id
+      - phase:
+          _eq: self_declared
+    columns:
+    - return_request_id
+    - phase
+    - grade
+    - notes
+select_permissions:
+- role: ops
+  permission:
+    columns: '*'
+    filter: {}
+    allow_aggregations: true
+- role: parent
+  permission:
+    columns: '*'
+    filter:
+      return_request:
+        account:
+          auth_user_id:
+            _eq: X-Hasura-User-Id
+    allow_aggregations: true

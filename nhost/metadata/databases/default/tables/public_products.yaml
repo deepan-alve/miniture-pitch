@@ -1,0 +1,33 @@
+table:
+  name: products
+  schema: public
+array_relationships:
+- name: images
+  using:
+    foreign_key_constraint_on:
+      column: product_id
+      table:
+        name: product_images
+        schema: public
+- name: owned_units
+  using:
+    foreign_key_constraint_on:
+      column: product_id
+      table:
+        name: owned_units
+        schema: public
+select_permissions:
+- role: ops
+  permission:
+    columns: '*'
+    filter: {}
+    allow_aggregations: true
+- role: parent
+  permission:
+    columns: '*'
+    filter: {}
+    allow_aggregations: true
+- role: public
+  permission:
+    columns: '*'
+    filter: {}

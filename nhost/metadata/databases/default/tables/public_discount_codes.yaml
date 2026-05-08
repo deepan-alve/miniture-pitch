@@ -1,0 +1,26 @@
+table:
+  name: discount_codes
+  schema: public
+object_relationships:
+- name: account
+  using:
+    foreign_key_constraint_on: account_id
+insert_permissions:
+- role: ops
+  permission:
+    check: {}
+    columns: '*'
+select_permissions:
+- role: ops
+  permission:
+    columns: '*'
+    filter: {}
+    allow_aggregations: true
+- role: parent
+  permission:
+    columns: '*'
+    filter:
+      account:
+        auth_user_id:
+          _eq: X-Hasura-User-Id
+    allow_aggregations: true

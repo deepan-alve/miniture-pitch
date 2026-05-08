@@ -1,0 +1,36 @@
+table:
+  name: assessment_photos
+  schema: public
+object_relationships:
+- name: assessment
+  using:
+    foreign_key_constraint_on: assessment_id
+insert_permissions:
+- role: parent
+  permission:
+    check:
+      assessment:
+        return_request:
+          account:
+            auth_user_id:
+              _eq: X-Hasura-User-Id
+    columns:
+    - assessment_id
+    - prompt
+    - storage_path
+select_permissions:
+- role: ops
+  permission:
+    columns: '*'
+    filter: {}
+    allow_aggregations: true
+- role: parent
+  permission:
+    columns: '*'
+    filter:
+      assessment:
+        return_request:
+          account:
+            auth_user_id:
+              _eq: X-Hasura-User-Id
+    allow_aggregations: true

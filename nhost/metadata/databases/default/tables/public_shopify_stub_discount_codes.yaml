@@ -1,0 +1,27 @@
+table:
+  name: shopify_stub_discount_codes
+  schema: public
+object_relationships:
+- name: account
+  using:
+    manual_configuration:
+      column_mapping:
+        customer_gid: shopify_customer_gid
+      insertion_order:
+      remote_table:
+        name: accounts
+        schema: public
+select_permissions:
+- role: ops
+  permission:
+    columns: '*'
+    filter: {}
+    allow_aggregations: true
+- role: parent
+  permission:
+    columns: '*'
+    filter:
+      account:
+        auth_user_id:
+          _eq: X-Hasura-User-Id
+    allow_aggregations: true

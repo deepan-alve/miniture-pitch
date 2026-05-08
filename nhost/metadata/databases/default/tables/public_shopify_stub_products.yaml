@@ -1,0 +1,19 @@
+table:
+  name: shopify_stub_products
+  schema: public
+select_permissions:
+- role: ops
+  permission:
+    columns: '*'
+    filter: {}
+    allow_aggregations: true
+- role: parent
+  permission:
+    columns: '*'
+    filter:
+      _and:
+      - status:
+          _eq: ACTIVE
+      - sold_at:
+          _is_null: true
+    allow_aggregations: true

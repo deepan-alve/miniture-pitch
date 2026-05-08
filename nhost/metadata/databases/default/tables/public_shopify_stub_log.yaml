@@ -1,0 +1,9 @@
+table:
+  name: shopify_stub_log
+  schema: public
+select_permissions:
+- role: ops
+  permission:
+    columns: '*'
+    filter: {}
+    allow_aggregations: true
