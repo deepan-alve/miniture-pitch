@@ -55,23 +55,36 @@ curl -sS https://ntytiuebfzzodrotraun.hasura.ap-south-1.nhost.run/v1/graphql \
 
 Should return `{"data":{"accounts_aggregate":{"aggregate":{"count":N}}}}`.
 
-## How migrations / metadata land in cloud (the workflow)
+## How migrations / metadata / Functions land in cloud (the workflow)
 
-We don't use `nhost up cloud` (it's a local-stack-against-cloud-Postgres
-hybrid that needs Docker). Instead:
+The cloud project is connected to GitHub at **`deepan-alve/miniture-pitch`** (branch `main`). Every deploy fetches that ref, applies migrations, syncs metadata, and rolls out Functions.
 
-1. **Schema (DDL)**: SQL files in `nhost/migrations/default/<ts>_<name>/up.sql`.
-   We POST their contents to `/v2/query` with `run_sql`. See
-   `scripts/apply-migrations.sh` (TODO — in this build we ran it inline).
+### Trigger a deploy from the CLI
 
-2. **Metadata (table tracking, relationships, permissions)**: bulk POST
-   to `/v1/metadata` using the `pg_track_table` /
-   `pg_create_object_relationship` actions.
+```bash
+HEAD=$(git -C ~/Documents/Padaipu/Miniture rev-parse HEAD)
 
-3. **Config (Hasura settings, auth providers, etc.)**:
-   `nhost config apply --subdomain ntytiuebfzzodrotraun --yes` — pushes
-   `nhost/nhost.toml` to the cloud project.
+HTTPS_PROXY=socks5://127.0.0.1:1080 ALL_PROXY=socks5://127.0.0.1:1080 \
+  nhost deployments new \
+  --subdomain ntytiuebfzzodrotraun \
+  --ref "$HEAD" \
+  --user deepan-alve \
+  --message "your message" \
+  --follow
+```
 
-This bypasses the GitHub-integrated deployment path. When we're ready to
-productionize, we'd switch to `nhost deployments new <git_ref>` with a
-GitHub-connected repo.
+(`--follow` streams logs; can drop it and poll `nhost deployments list` instead.) The proxy env vars are only needed on this dev machine — Fortinet middlebox at the network edge breaks direct HTTPS to Nhost.
+
+### What the deploy does
+
+1. **`nhost.toml` config** → applied to the cloud project's settings (Hasura version, auth providers, `[auth.user.roles]`, etc.). 
+2. **Migrations** in `nhost/migrations/default/*/up.sql` → applied via Hasura CLI. Migrations are idempotent (CREATE TYPE wrapped in DO/EXCEPTION, IF NOT EXISTS on tables/indexes, DROP TRIGGER IF EXISTS before CREATE TRIGGER) so they're safe to re-run.
+3. **Metadata** in `nhost/metadata/` → applied via Hasura CLI. Defines tracked tables, relationships, and the parent/ops/admin/public permission matrix. Source of truth = whatever's in `nhost/metadata/databases/default/tables/*.yaml` at the deployed ref.
+4. **Functions** in `functions/*.ts` → bundled with esbuild and deployed as serverless endpoints at `https://ntytiuebfzzodrotraun.functions.ap-south-1.nhost.run/v1/<filename>`.
+
+### Bootstrap-time admin operations
+
+The first-time bootstrap that's not in the deploy pipeline:
+
+- **Admin secret rotation**: `nhost secrets update HASURA_GRAPHQL_ADMIN_SECRET <new> --subdomain ntytiuebfzzodrotraun` then `nhost config apply ...` then write the new value to `.cloud-admin-secret`.
+- **Seed data**: `nhost/seeds/default/0001_demo_data.sql` is applied manually via `run_sql` against `/v2/query` (see `scripts/reset-demo.sh` for the cleanup-then-reseed pattern).
